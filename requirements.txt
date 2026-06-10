@@ -1,5 +1,4 @@
 nnunetv2
-antspyx
 SimpleITK
 nibabel
 numpy
