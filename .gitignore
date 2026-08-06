@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pth
+*.ckpt
+*.tar
+*.tar.gz
+*.tgz
+artifacts/
+model/
+test/.staging_input/
+test/.staging_output/

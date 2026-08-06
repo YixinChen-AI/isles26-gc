@@ -1,4 +1,11 @@
-nnunetv2
-SimpleITK
-nibabel
-numpy
+nnunetv2==2.7.0
+dynamic-network-architectures==0.4.3
+acvl-utils==0.2.6
+batchgenerators==0.25.2
+batchgeneratorsv2==0.3.2
+SimpleITK==2.5.5
+nibabel==5.4.2
+numpy==2.4.6
+scipy==1.17.1
+fastapi==0.141.1
+uvicorn==0.52.1

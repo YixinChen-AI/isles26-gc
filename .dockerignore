@@ -1,0 +1,11 @@
+.git
+__pycache__
+*.pyc
+*.pth
+*.ckpt
+*.tar
+*.tar.gz
+*.tgz
+artifacts
+test-artifacts
+model
