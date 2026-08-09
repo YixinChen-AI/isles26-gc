@@ -18,9 +18,9 @@
   },
   "folds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
   "inference_trainer": "nnUNetTrainer",
-  "minimum_component_volume_mm3": 0.0,
+  "minimum_component_volume_mm3": 25.0,
   "model_directory": "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres",
-  "probability_threshold": 0.5,
+  "probability_threshold": 0.3,
   "schema_version": 1,
   "source_trainer": "nnUNetTrainerISLES26TverskyDirect300"
 }
