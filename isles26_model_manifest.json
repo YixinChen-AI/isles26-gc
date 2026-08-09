@@ -1,0 +1,26 @@
+{
+  "bundle_purpose": "final",
+  "checkpoint_name": "checkpoint_final.pth",
+  "dataset": "Dataset503_ISLES26R3Raw",
+  "files": {
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "7510e2990933ae76fdaced9be449ef5441e80e7ebbb0cb361eaaa48abf1e1873",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "a960c204d13bc893d76e8289c31c6c5523d16ecacf4b475ef01340189381f0f4",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "4e53e66e6bcf6cb65317cd6e1f785fa3bff9b036e58b34a12f4fc93f554c03c8",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "750e7e0d4107afdf8405000a278e8199a87ed4a44f455dd21c39067c6b854d22",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "754f267c24f2cc292a3f84ef492ffc32b23d427881a4e18d6b0af9492b8c44db",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "a3c6c59cd0100b0d7050c53cad93b7b12b939e6cfa472189b57aada5eab1ed7d",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "8f89f6b241fa1997de07533d52bd228eb515825edbcb2149e791708ebc053fed",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "6477596562e9692705748812981839e490aef8885877daa6a16aefda37e27a02",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "a6ee19dd45e7104425b89e3eae77269aa9fd898ee568d709663e532f9dfe2336",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "462c4724d9816b03220cbbd07576827fe3a0ab82ae282b3f83cbb65d160f7873",
+    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467"
+  },
+  "folds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "inference_trainer": "nnUNetTrainer",
+  "minimum_component_volume_mm3": 0.0,
+  "model_directory": "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres",
+  "probability_threshold": 0.5,
+  "schema_version": 1,
+  "source_trainer": "nnUNetTrainerISLES26TverskyDirect300"
+}

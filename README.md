@@ -9,9 +9,11 @@ Execution policy for this project:
 - do not build or run this container on the Mac;
 - build-only tests use a CPU SLURM job on `brainroi`;
 - model inference and end-to-end tests use one GPU SLURM job on `brainroi`;
-- model weights are uploaded as a separate `model.tar.gz` resource. Grand
-  Challenge extracts that resource at `/opt/ml/model`; local E2E reproduces
-  this using a read-only bind mount.
+- the immutable checkpoint archive is split into sub-2-GB assets in the public
+  `YixinChen-AI/isles26-weights` GitHub Release and downloaded during the Grand
+  Challenge cloud build into `/opt/app/model`;
+- the small `isles26_model_manifest.json` is versioned with each algorithm tag,
+  allowing default and calibrated submissions to reuse the exact same weights.
 
 Required model layout:
 
@@ -30,8 +32,9 @@ The checkpoints in this bundle are inference-only copies produced by
 `do_save.sh` refuses to package without `ISLES26_MODEL_STAGE` or into an
 existing artifact directory. It atomically emits both
 `container.tar.gz` and `model.tar.gz`, matching the official ISLES 2026
-template. The Docker context excludes `model` so weights cannot be duplicated
-inside the image accidentally.
+template. The Docker context excludes local `model` artifacts. The Dockerfile
+verifies the reconstructed archive against its pinned SHA-256 before extraction
+and then installs the policy manifest from the algorithm tag.
 
 The ISLES 2026 Preliminary settings must request the allowed NVIDIA T4 GPU
 (16 GiB VRAM) and no more than 32 GiB main memory. The cluster E2E runs on the

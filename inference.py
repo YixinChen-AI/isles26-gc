@@ -22,7 +22,7 @@ from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 INPUT_PATH = Path("/input")
 OUTPUT_PATH = Path("/output")
-MODEL_ROOT = Path(os.environ.get("ISLES26_MODEL_ROOT", "/opt/ml/model"))
+MODEL_ROOT = Path(os.environ.get("ISLES26_MODEL_ROOT", "/opt/app/model"))
 EXPECTED_INTERFACE = ("stroke-metadata", "t1-brain-mri")
 EXPECTED_DATASET = "Dataset503_ISLES26R3Raw"
 SEGMENTATION_SOCKET = "stroke-lesion-segmentation"
