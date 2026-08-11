@@ -26,17 +26,25 @@ RUN python -m pip install \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-baseline-fixed500-r1
-ARG MODEL_ARCHIVE_SHA256=3f08f161d9710b8b6b9374f68f5804b16bdb4bacea3c1fd2a9e68b91a54e9d80
+ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-dual-ensemble-r1
+ARG MODEL_ARCHIVE_SHA256=f351ad8c980da127f491fb2224e63fd4a41659c55bccc5a757280afad64b1639
+ARG WEIGHTS_PARTS="model.tar.gz.part-aa model.tar.gz.part-ab model.tar.gz.part-ac model.tar.gz.part-ad"
 RUN mkdir -p /opt/app/model \
-    && curl --retry 6 --retry-delay 5 --retry-all-errors -fSL \
-        -o /tmp/model.tar.gz.part-aa "${WEIGHTS_BASE}/model.tar.gz.part-aa" \
-    && curl --retry 6 --retry-delay 5 --retry-all-errors -fSL \
-        -o /tmp/model.tar.gz.part-ab "${WEIGHTS_BASE}/model.tar.gz.part-ab" \
-    && cat /tmp/model.tar.gz.part-aa /tmp/model.tar.gz.part-ab > /tmp/model.tar.gz \
+    && : > /tmp/model.tar.gz \
+    && for part in ${WEIGHTS_PARTS}; do \
+        case "${part}" in \
+          model.tar.gz.part-[a-z][a-z]) ;; \
+          *) echo "invalid model archive part: ${part}" >&2; exit 1 ;; \
+        esac; \
+        curl --http1.1 --continue-at - \
+          --connect-timeout 30 --speed-limit 1024 --speed-time 120 \
+          --retry 6 --retry-delay 5 --retry-all-errors -fSL \
+          -o "/tmp/${part}" "${WEIGHTS_BASE}/${part}"; \
+        cat "/tmp/${part}" >> /tmp/model.tar.gz; \
+      done \
     && echo "${MODEL_ARCHIVE_SHA256}  /tmp/model.tar.gz" | sha256sum -c - \
     && tar -xzf /tmp/model.tar.gz -C /opt/app/model \
-    && rm -f /tmp/model.tar.gz /tmp/model.tar.gz.part-aa /tmp/model.tar.gz.part-ab
+    && rm -f /tmp/model.tar.gz /tmp/model.tar.gz.part-??
 
 COPY --chown=user:user app.py inference.py /opt/app/
 COPY --chown=user:user isles26_model_manifest.json /opt/app/model/isles26_model_manifest.json

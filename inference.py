@@ -34,6 +34,17 @@ ALLOWED_IMAGE_SUFFIXES = (".mha", ".mhd", ".nii", ".nii.gz")
 class ModelBundle:
     predictor: nnUNetPredictor
     manifest: dict[str, Any]
+    components: tuple["ModelComponent", ...] = ()
+
+
+@dataclass(frozen=True)
+class ModelComponent:
+    name: str
+    model_dir: Path
+    folds: tuple[int, ...]
+    checkpoint_name: str
+    weight: float
+    input_mode: str = "t1"
 
 
 def sha256_file(path: Path) -> str:
@@ -52,7 +63,6 @@ def validate_manifest_layout(
             f"expected dataset {EXPECTED_DATASET}, got "
             f"{manifest.get('dataset')}"
         )
-    folds = tuple(int(fold) for fold in manifest["folds"])
     bundle_purpose = str(manifest.get("bundle_purpose", "final"))
     expected_folds = (
         tuple(range(5))
@@ -61,33 +71,15 @@ def validate_manifest_layout(
     )
     if bundle_purpose not in {"final", "preliminary_interim"}:
         raise ValueError(f"unsupported bundle purpose: {bundle_purpose}")
-    if folds != expected_folds:
-        raise ValueError(
-            f"expected {bundle_purpose} folds {expected_folds}, got {folds}"
-        )
-    checkpoint_name = str(manifest["checkpoint_name"])
-    if (
-        Path(checkpoint_name).name != checkpoint_name
-        or not checkpoint_name.endswith(".pth")
-    ):
-        raise ValueError(f"unsafe checkpoint name: {checkpoint_name}")
     expected_checkpoint = (
         "checkpoint_epoch_0500.pth"
         if bundle_purpose == "preliminary_interim"
         else "checkpoint_final.pth"
     )
-    if checkpoint_name != expected_checkpoint:
-        raise ValueError(
-            f"expected {bundle_purpose} checkpoint {expected_checkpoint}, "
-            f"got {checkpoint_name}"
-        )
     if "source_fold_mapping" in manifest:
         raise ValueError(
             f"{bundle_purpose} bundle must preserve one-to-one fold identity"
         )
-    model_directory = str(manifest["model_directory"])
-    if Path(model_directory).name != model_directory:
-        raise ValueError(f"unsafe model directory: {model_directory}")
     threshold = float(manifest["probability_threshold"])
     minimum_volume = float(manifest["minimum_component_volume_mm3"])
     if not 0 < threshold < 1 or minimum_volume < 0:
@@ -107,14 +99,78 @@ def validate_manifest_layout(
                 "guarded relative-volume policy cannot also use absolute volume"
             )
 
-    expected_files = {
-        f"{model_directory}/dataset.json",
-        f"{model_directory}/plans.json",
-        *{
-            f"{model_directory}/fold_{fold}/{checkpoint_name}"
-            for fold in folds
-        },
-    }
+    raw_components = manifest.get("ensemble_models")
+    if raw_components is None:
+        raw_components = [
+            {
+                "name": "model",
+                "model_directory": manifest["model_directory"],
+                "folds": manifest["folds"],
+                "checkpoint_name": manifest["checkpoint_name"],
+                "weight": 1.0,
+            }
+        ]
+    if not isinstance(raw_components, list) or not raw_components:
+        raise ValueError("ensemble_models must be a nonempty list")
+    if bundle_purpose == "preliminary_interim" and len(raw_components) != 1:
+        raise ValueError("preliminary_interim cannot use a multi-model ensemble")
+    expected_files: set[str] = set()
+    component_names: set[str] = set()
+    model_directories: set[str] = set()
+    weights = []
+    normalized_components = []
+    for component in raw_components:
+        name = str(component["name"])
+        if not name or any(character not in string.ascii_letters + string.digits + "_-" for character in name):
+            raise ValueError(f"unsafe ensemble component name: {name}")
+        if name in component_names:
+            raise ValueError(f"duplicate ensemble component name: {name}")
+        component_names.add(name)
+        model_directory = str(component["model_directory"])
+        if Path(model_directory).name != model_directory:
+            raise ValueError(f"unsafe model directory: {model_directory}")
+        if model_directory in model_directories:
+            raise ValueError(f"duplicate ensemble model directory: {model_directory}")
+        model_directories.add(model_directory)
+        folds = tuple(int(fold) for fold in component["folds"])
+        if folds != expected_folds:
+            raise ValueError(
+                f"expected {bundle_purpose} folds {expected_folds}, got {folds}"
+            )
+        checkpoint_name = str(component["checkpoint_name"])
+        if Path(checkpoint_name).name != checkpoint_name or not checkpoint_name.endswith(".pth"):
+            raise ValueError(f"unsafe checkpoint name: {checkpoint_name}")
+        if checkpoint_name != expected_checkpoint:
+            raise ValueError(
+                f"expected {bundle_purpose} checkpoint {expected_checkpoint}, got {checkpoint_name}"
+            )
+        weight = float(component["weight"])
+        if not np.isfinite(weight) or weight <= 0 or weight > 1:
+            raise ValueError(f"invalid ensemble weight for {name}: {weight}")
+        weights.append(weight)
+        input_mode = str(component.get("input_mode", "t1"))
+        if input_mode not in {"t1", "t1_physical_contralateral"}:
+            raise ValueError(
+                f"unsupported input mode for {name}: {input_mode}"
+            )
+        normalized_components.append((model_directory, folds, checkpoint_name))
+        expected_files.update(
+            {
+                f"{model_directory}/dataset.json",
+                f"{model_directory}/plans.json",
+                *{
+                    f"{model_directory}/fold_{fold}/{checkpoint_name}"
+                    for fold in folds
+                },
+            }
+        )
+    if not np.isclose(sum(weights), 1.0, atol=1e-8):
+        raise ValueError(f"ensemble weights must sum to one: {weights}")
+    blend_mode = str(
+        manifest.get("ensemble_blend_mode", "weighted_probability")
+    )
+    if blend_mode not in {"weighted_probability", "weighted_logit"}:
+        raise ValueError(f"unsupported ensemble blend mode: {blend_mode}")
     declared_files = set(manifest["files"])
     if declared_files != expected_files:
         raise ValueError(
@@ -135,8 +191,34 @@ def validate_manifest_layout(
             character not in hexadecimal for character in expected_sha
         ):
             raise ValueError(f"invalid SHA-256 for {relative_name}")
-    model_dir = MODEL_ROOT / model_directory
-    return model_dir, folds, expected_files
+    first_directory, first_folds, _ = normalized_components[0]
+    model_dir = MODEL_ROOT / first_directory
+    return model_dir, first_folds, expected_files
+
+
+def model_components(manifest: dict[str, Any]) -> tuple[ModelComponent, ...]:
+    raw_components = manifest.get("ensemble_models")
+    if raw_components is None:
+        raw_components = [
+            {
+                "name": "model",
+                "model_directory": manifest["model_directory"],
+                "folds": manifest["folds"],
+                "checkpoint_name": manifest["checkpoint_name"],
+                "weight": 1.0,
+            }
+        ]
+    return tuple(
+        ModelComponent(
+            name=str(component["name"]),
+            model_dir=MODEL_ROOT / str(component["model_directory"]),
+            folds=tuple(int(fold) for fold in component["folds"]),
+            checkpoint_name=str(component["checkpoint_name"]),
+            weight=float(component["weight"]),
+            input_mode=str(component.get("input_mode", "t1")),
+        )
+        for component in raw_components
+    )
 
 
 def load_manifest() -> tuple[dict[str, Any], Path, tuple[int, ...], set[str]]:
@@ -145,10 +227,7 @@ def load_manifest() -> tuple[dict[str, Any], Path, tuple[int, ...], set[str]]:
         raise FileNotFoundError(f"missing model manifest: {manifest_path}")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     required = {
-        "model_directory",
         "dataset",
-        "folds",
-        "checkpoint_name",
         "probability_threshold",
         "minimum_component_volume_mm3",
         "files",
@@ -156,6 +235,11 @@ def load_manifest() -> tuple[dict[str, Any], Path, tuple[int, ...], set[str]]:
     missing = required - set(manifest)
     if missing:
         raise ValueError(f"model manifest lacks fields: {sorted(missing)}")
+    if "ensemble_models" not in manifest:
+        legacy_required = {"model_directory", "folds", "checkpoint_name"}
+        legacy_missing = legacy_required - set(manifest)
+        if legacy_missing:
+            raise ValueError(f"model manifest lacks fields: {sorted(legacy_missing)}")
     model_dir, folds, expected_files = validate_manifest_layout(manifest)
     if not model_dir.is_dir():
         raise FileNotFoundError(f"missing model directory: {model_dir}")
@@ -188,11 +272,13 @@ def init_model() -> ModelBundle:
     torch.set_num_threads(max(1, int(os.environ.get("OMP_NUM_THREADS", "8"))))
     manifest, model_dir, folds, expected_files = load_manifest()
     verify_model_files(manifest, expected_files)
+    components = model_components(manifest)
 
     device = torch.device("cuda", 0)
     print(
         f"[init] torch={torch.__version__} device={torch.cuda.get_device_name(0)} "
-        f"model={model_dir} folds={folds}",
+        f"model={model_dir} folds={folds} components="
+        f"{[(item.name, item.weight) for item in components]}",
         flush=True,
     )
     predictor = nnUNetPredictor(
@@ -208,10 +294,49 @@ def init_model() -> ModelBundle:
     predictor.initialize_from_trained_model_folder(
         str(model_dir),
         use_folds=folds,
-        checkpoint_name=str(manifest["checkpoint_name"]),
+        checkpoint_name=components[0].checkpoint_name,
     )
     print(f"[init] {len(folds)}-fold model loaded", flush=True)
-    return ModelBundle(predictor=predictor, manifest=manifest)
+    return ModelBundle(
+        predictor=predictor,
+        manifest=manifest,
+        components=components,
+    )
+
+
+def blend_probability_maps(
+    weighted_probabilities: list[tuple[float, np.ndarray]],
+    *,
+    mode: str = "weighted_probability",
+) -> np.ndarray:
+    if not weighted_probabilities:
+        raise ValueError("no probability maps to blend")
+    reference_shape = weighted_probabilities[0][1].shape
+    total_weight = 0.0
+    blended = np.zeros(reference_shape, dtype=np.float32)
+    for weight, probability in weighted_probabilities:
+        probability = np.asarray(probability, dtype=np.float32)
+        if probability.shape != reference_shape:
+            raise ValueError(
+                f"ensemble probability shape mismatch: {probability.shape} != {reference_shape}"
+            )
+        if not np.isfinite(probability).all():
+            raise ValueError("ensemble probability contains NaN or Inf")
+        if mode == "weighted_probability":
+            contribution = probability
+        elif mode == "weighted_logit":
+            epsilon = np.float32(1e-5)
+            clipped = np.clip(probability, epsilon, 1 - epsilon)
+            contribution = np.log(clipped) - np.log1p(-clipped)
+        else:
+            raise ValueError(f"unsupported ensemble blend mode: {mode}")
+        blended += float(weight) * contribution
+        total_weight += float(weight)
+    if not np.isclose(total_weight, 1.0, atol=1e-8):
+        raise ValueError(f"ensemble probability weights sum to {total_weight}")
+    if mode == "weighted_logit":
+        blended = 1.0 / (1.0 + np.exp(-blended))
+    return np.clip(blended, 0, 1)
 
 
 def load_json(path: Path) -> Any:
@@ -249,6 +374,63 @@ def same_geometry(left: sitk.Image, right: sitk.Image) -> bool:
         and np.allclose(left.GetOrigin(), right.GetOrigin(), atol=1e-5)
         and np.allclose(left.GetDirection(), right.GetDirection(), atol=1e-6)
     )
+
+
+def physical_contralateral_image(reference: sitk.Image) -> sitk.Image:
+    """Reproduce Dataset504's physical-LPS brain-midline reflection."""
+    image = sitk.Cast(reference, sitk.sitkFloat32)
+    array = sitk.GetArrayFromImage(image)
+    brain = np.isfinite(array) & (np.abs(array) > 1e-6)
+    coordinates = np.argwhere(brain)
+    if coordinates.size == 0:
+        raise ValueError("cannot reflect an empty T1 foreground")
+    minimum = coordinates.min(axis=0)
+    maximum = coordinates.max(axis=0)
+    physical_x = []
+    for z in (minimum[0], maximum[0]):
+        for y in (minimum[1], maximum[1]):
+            for x in (minimum[2], maximum[2]):
+                point = image.TransformIndexToPhysicalPoint(
+                    (int(x), int(y), int(z))
+                )
+                physical_x.append(float(point[0]))
+    midline_x = (min(physical_x) + max(physical_x)) / 2.0
+    transform = sitk.AffineTransform(3)
+    transform.SetMatrix((-1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
+    transform.SetTranslation((2.0 * midline_x, 0.0, 0.0))
+    mirrored = sitk.Resample(
+        image,
+        image,
+        transform,
+        sitk.sitkLinear,
+        0.0,
+        sitk.sitkFloat32,
+    )
+    if not same_geometry(image, mirrored):
+        raise RuntimeError("physical contralateral channel changed geometry")
+    return mirrored
+
+
+def stage_component_input(
+    reference: sitk.Image,
+    directory: Path,
+    input_mode: str,
+) -> tuple[Path, ...]:
+    """Write exactly the nnU-Net channels declared for one component."""
+    directory.mkdir(parents=True, exist_ok=False)
+    original = directory / "ISLES26GC_0000.nii.gz"
+    sitk.WriteImage(reference, str(original), useCompression=True)
+    if input_mode == "t1":
+        return (original,)
+    if input_mode != "t1_physical_contralateral":
+        raise ValueError(f"unsupported component input mode: {input_mode}")
+    contralateral = directory / "ISLES26GC_0001.nii.gz"
+    sitk.WriteImage(
+        physical_contralateral_image(reference),
+        str(contralateral),
+        useCompression=True,
+    )
+    return original, contralateral
 
 
 def remove_small_components(
@@ -377,47 +559,89 @@ def run(model: ModelBundle) -> None:
         nnunet_output = tmp_path / "output"
         nnunet_input.mkdir()
         nnunet_output.mkdir()
-        staged_input = nnunet_input / "ISLES26GC_0000.nii.gz"
-        sitk.WriteImage(reference, str(staged_input), useCompression=True)
 
-        model.predictor.predict_from_files(
-            str(nnunet_input),
-            str(nnunet_output),
-            save_probabilities=True,
-            overwrite=True,
-            num_processes_preprocessing=1,
-            num_processes_segmentation_export=1,
-            folder_with_segs_from_prev_stage=None,
-            num_parts=1,
-            part_id=0,
+        components = model.components
+        if not components:
+            components = (
+                ModelComponent(
+                    name="preinitialized",
+                    model_dir=Path("."),
+                    folds=(),
+                    checkpoint_name="",
+                    weight=1.0,
+                    input_mode="t1",
+                ),
+            )
+        weighted_probabilities: list[tuple[float, np.ndarray]] = []
+        for index, component in enumerate(components):
+            component_input = nnunet_input / component.name
+            staged_channels = stage_component_input(
+                reference,
+                component_input,
+                component.input_mode,
+            )
+            component_output = nnunet_output / component.name
+            component_output.mkdir()
+            if model.components:
+                print(
+                    f"[invoke] loading component={component.name} "
+                    f"weight={component.weight} input_mode={component.input_mode} "
+                    f"channels={len(staged_channels)}",
+                    flush=True,
+                )
+                model.predictor.initialize_from_trained_model_folder(
+                    str(component.model_dir),
+                    use_folds=component.folds,
+                    checkpoint_name=component.checkpoint_name,
+                )
+            model.predictor.predict_from_files(
+                str(component_input),
+                str(component_output),
+                save_probabilities=True,
+                overwrite=True,
+                num_processes_preprocessing=1,
+                num_processes_segmentation_export=1,
+                folder_with_segs_from_prev_stage=None,
+                num_parts=1,
+                part_id=0,
+            )
+            segmentation_path = component_output / "ISLES26GC.nii.gz"
+            probability_path = component_output / "ISLES26GC.npz"
+            if not segmentation_path.is_file() or not probability_path.is_file():
+                raise FileNotFoundError(
+                    f"nnU-Net outputs missing in {component_output}: "
+                    f"{list(component_output.iterdir())}"
+                )
+            nnunet_segmentation = sitk.ReadImage(str(segmentation_path))
+            if not same_geometry(reference, nnunet_segmentation):
+                raise RuntimeError("nnU-Net prediction geometry differs from input")
+            probabilities = np.load(probability_path)["probabilities"]
+            if probabilities.ndim != 4 or probabilities.shape[0] != 2:
+                raise ValueError(
+                    f"expected binary probabilities [2,Z,Y,X], got "
+                    f"{probabilities.shape}"
+                )
+            component_probability = np.asarray(
+                probabilities[1], dtype=np.float32
+            )
+            if component_probability.shape != tuple(reversed(reference.GetSize())):
+                raise ValueError(
+                    f"probability shape {component_probability.shape} does not match "
+                    f"input {tuple(reversed(reference.GetSize()))}"
+                )
+            if component_probability.min() < -1e-5 or component_probability.max() > 1 + 1e-5:
+                raise ValueError("probability map lies outside [0,1]")
+            weighted_probabilities.append(
+                (component.weight, component_probability)
+            )
+        probability = blend_probability_maps(
+            weighted_probabilities,
+            mode=str(
+                model.manifest.get(
+                    "ensemble_blend_mode", "weighted_probability"
+                )
+            ),
         )
-        segmentation_path = nnunet_output / "ISLES26GC.nii.gz"
-        probability_path = nnunet_output / "ISLES26GC.npz"
-        if not segmentation_path.is_file() or not probability_path.is_file():
-            raise FileNotFoundError(
-                f"nnU-Net outputs missing in {nnunet_output}: "
-                f"{list(nnunet_output.iterdir())}"
-            )
-        nnunet_segmentation = sitk.ReadImage(str(segmentation_path))
-        if not same_geometry(reference, nnunet_segmentation):
-            raise RuntimeError("nnU-Net prediction geometry differs from input")
-        probabilities = np.load(probability_path)["probabilities"]
-        if probabilities.ndim != 4 or probabilities.shape[0] != 2:
-            raise ValueError(
-                f"expected binary probabilities [2,Z,Y,X], got "
-                f"{probabilities.shape}"
-            )
-        probability = np.asarray(probabilities[1], dtype=np.float32)
-        if probability.shape != tuple(reversed(reference.GetSize())):
-            raise ValueError(
-                f"probability shape {probability.shape} does not match "
-                f"input {tuple(reversed(reference.GetSize()))}"
-            )
-        if not np.isfinite(probability).all():
-            raise ValueError("probability map contains NaN or Inf")
-        if probability.min() < -1e-5 or probability.max() > 1 + 1e-5:
-            raise ValueError("probability map lies outside [0,1]")
-        probability = np.clip(probability, 0, 1)
 
         binary = apply_postprocessing(
             probability,

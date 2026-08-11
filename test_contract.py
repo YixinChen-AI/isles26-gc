@@ -70,6 +70,128 @@ def main() -> int:
     _, folds, expected_files = inference.validate_manifest_layout(manifest)
     assert folds == tuple(range(10))
     assert len(expected_files) == 12
+    dual = synthetic_manifest()
+    dual.pop("model_directory")
+    dual.pop("folds")
+    dual.pop("checkpoint_name")
+    dual["ensemble_models"] = []
+    dual["files"] = {}
+    for name, directory, weight, digest in (
+        ("baseline", "Baseline__Plans__3d_fullres", 0.25, "a"),
+        ("tversky", "Tversky__Plans__3d_fullres", 0.75, "b"),
+    ):
+        dual["ensemble_models"].append(
+            {
+                "name": name,
+                "model_directory": directory,
+                "folds": list(range(10)),
+                "checkpoint_name": "checkpoint_final.pth",
+                "weight": weight,
+            }
+        )
+        dual["files"][f"{directory}/dataset.json"] = digest * 64
+        dual["files"][f"{directory}/plans.json"] = digest * 64
+        for fold in range(10):
+            dual["files"][
+                f"{directory}/fold_{fold}/checkpoint_final.pth"
+            ] = digest * 64
+    _, dual_folds, dual_files = inference.validate_manifest_layout(dual)
+    assert dual_folds == tuple(range(10))
+    assert len(dual_files) == 24
+    dual_components = inference.model_components(dual)
+    assert [component.name for component in dual_components] == [
+        "baseline", "tversky"
+    ]
+    assert [component.weight for component in dual_components] == [0.25, 0.75]
+    blended = inference.blend_probability_maps(
+        [
+            (0.25, np.zeros((2, 3, 4), dtype=np.float32)),
+            (0.75, np.ones((2, 3, 4), dtype=np.float32)),
+        ]
+    )
+    np.testing.assert_allclose(blended, 0.75)
+    tri = json.loads(json.dumps(dual))
+    tri["ensemble_models"][0]["weight"] = 0.20
+    tri["ensemble_models"][1]["weight"] = 0.50
+    recall_directory = "RecallTversky__Plans__3d_fullres"
+    tri["ensemble_models"].append(
+        {
+            "name": "recall_tversky",
+            "model_directory": recall_directory,
+            "folds": list(range(10)),
+            "checkpoint_name": "checkpoint_final.pth",
+            "weight": 0.30,
+            "input_mode": "t1",
+        }
+    )
+    tri["files"][f"{recall_directory}/dataset.json"] = "c" * 64
+    tri["files"][f"{recall_directory}/plans.json"] = "c" * 64
+    for fold in range(10):
+        tri["files"][
+            f"{recall_directory}/fold_{fold}/checkpoint_final.pth"
+        ] = "c" * 64
+    _, tri_folds, tri_files = inference.validate_manifest_layout(tri)
+    assert tri_folds == tuple(range(10))
+    assert len(tri_files) == 36
+    tri_components = inference.model_components(tri)
+    assert [component.name for component in tri_components] == [
+        "baseline", "tversky", "recall_tversky"
+    ]
+    assert [component.weight for component in tri_components] == [
+        0.20, 0.50, 0.30
+    ]
+    assert [component.input_mode for component in tri_components] == [
+        "t1", "t1", "t1"
+    ]
+    symmetry_tri = json.loads(json.dumps(tri))
+    symmetry_tri["ensemble_models"][-1]["name"] = "symmetry"
+    symmetry_tri["ensemble_models"][-1][
+        "input_mode"
+    ] = "t1_physical_contralateral"
+    inference.validate_manifest_layout(symmetry_tri)
+    assert inference.model_components(symmetry_tri)[-1].input_mode == (
+        "t1_physical_contralateral"
+    )
+    invalid_input_mode = json.loads(json.dumps(symmetry_tri))
+    invalid_input_mode["ensemble_models"][-1]["input_mode"] = "array_flip"
+    try:
+        inference.validate_manifest_layout(invalid_input_mode)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unsupported component input mode was accepted")
+    tri_blended = inference.blend_probability_maps(
+        [
+            (0.20, np.zeros((2, 3, 4), dtype=np.float32)),
+            (0.50, np.full((2, 3, 4), 0.5, dtype=np.float32)),
+            (0.30, np.ones((2, 3, 4), dtype=np.float32)),
+        ]
+    )
+    np.testing.assert_allclose(tri_blended, 0.55)
+    logit_blended = inference.blend_probability_maps(
+        [
+            (0.5, np.asarray([0.2, 0.8], dtype=np.float32)),
+            (0.5, np.asarray([0.8, 0.2], dtype=np.float32)),
+        ],
+        mode="weighted_logit",
+    )
+    np.testing.assert_allclose(logit_blended, 0.5, rtol=2e-5, atol=2e-6)
+    invalid_dual_mode = json.loads(json.dumps(dual))
+    invalid_dual_mode["ensemble_blend_mode"] = "unknown"
+    try:
+        inference.validate_manifest_layout(invalid_dual_mode)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unsupported ensemble blend mode was accepted")
+    invalid_dual_weight = json.loads(json.dumps(dual))
+    invalid_dual_weight["ensemble_models"][0]["weight"] = 0.5
+    try:
+        inference.validate_manifest_layout(invalid_dual_weight)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("non-normalized ensemble weights were accepted")
     unsafe = json.loads(json.dumps(manifest))
     unsafe["model_directory"] = "../escape"
     try:
@@ -139,6 +261,43 @@ def main() -> int:
     reference.SetOrigin((3.0, -2.0, 8.5))
     reference.SetDirection((0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0))
     assert inference.same_geometry(reference, reference)
+
+    reflection_array = np.arange(1, 1 + 3 * 4 * 7, dtype=np.float32).reshape(
+        3, 4, 7
+    )
+    reflection_reference = sitk.GetImageFromArray(reflection_array)
+    reflection_reference.SetSpacing((0.7, 1.2, 2.1))
+    mirrored = inference.physical_contralateral_image(reflection_reference)
+    assert inference.same_geometry(reflection_reference, mirrored)
+    np.testing.assert_allclose(
+        sitk.GetArrayFromImage(mirrored),
+        np.flip(reflection_array, axis=2),
+        rtol=0,
+        atol=1e-5,
+    )
+    with tempfile.TemporaryDirectory() as input_tmp:
+        input_tmp_path = Path(input_tmp)
+        one = inference.stage_component_input(
+            reflection_reference, input_tmp_path / "one", "t1"
+        )
+        two = inference.stage_component_input(
+            reflection_reference,
+            input_tmp_path / "two",
+            "t1_physical_contralateral",
+        )
+        assert [path.name for path in one] == ["ISLES26GC_0000.nii.gz"]
+        assert [path.name for path in two] == [
+            "ISLES26GC_0000.nii.gz",
+            "ISLES26GC_0001.nii.gz",
+        ]
+        written_mirror = sitk.ReadImage(str(two[1]))
+        assert inference.same_geometry(reflection_reference, written_mirror)
+        np.testing.assert_allclose(
+            sitk.GetArrayFromImage(written_mirror),
+            np.flip(reflection_array, axis=2),
+            rtol=0,
+            atol=1e-5,
+        )
 
     components = np.zeros((9, 10, 11), np.uint8)
     components[1, 1, 1] = 1
