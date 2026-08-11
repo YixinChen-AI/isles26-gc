@@ -26,9 +26,9 @@ RUN python -m pip install \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-dual-ensemble-r1
+ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-dual-ensemble-r2
 ARG MODEL_ARCHIVE_SHA256=f351ad8c980da127f491fb2224e63fd4a41659c55bccc5a757280afad64b1639
-ARG WEIGHTS_PARTS="model.tar.gz.part-aa model.tar.gz.part-ab model.tar.gz.part-ac model.tar.gz.part-ad"
+ARG WEIGHTS_PARTS="model.tar.gz.part-aa model.tar.gz.part-ab model.tar.gz.part-ac model.tar.gz.part-ad model.tar.gz.part-ae model.tar.gz.part-af model.tar.gz.part-ag model.tar.gz.part-ah"
 RUN mkdir -p /opt/app/model \
     && : > /tmp/model.tar.gz \
     && for part in ${WEIGHTS_PARTS}; do \
