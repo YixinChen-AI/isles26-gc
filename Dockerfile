@@ -26,8 +26,8 @@ RUN python -m pip install \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-tverskydirect300-r1
-ARG MODEL_ARCHIVE_SHA256=650733172db2da1d4bdbb50b3ad797210333196f8d9a69d6f8bee98e93746a14
+ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-baseline-fixed500-r1
+ARG MODEL_ARCHIVE_SHA256=3f08f161d9710b8b6b9374f68f5804b16bdb4bacea3c1fd2a9e68b91a54e9d80
 RUN mkdir -p /opt/app/model \
     && curl --retry 6 --retry-delay 5 --retry-all-errors -fSL \
         -o /tmp/model.tar.gz.part-aa "${WEIGHTS_BASE}/model.tar.gz.part-aa" \

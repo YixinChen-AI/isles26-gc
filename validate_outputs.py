@@ -56,6 +56,51 @@ def remove_small_components(
     return keep[instances].astype(np.uint8)
 
 
+def apply_postprocessing(
+    probability: np.ndarray,
+    manifest: dict,
+    *,
+    voxel_volume_mm3: float,
+) -> np.ndarray:
+    binary = np.asarray(
+        probability > float(manifest["probability_threshold"]), dtype=bool
+    )
+    policy = manifest.get("postprocessing_policy")
+    if policy is None:
+        return remove_small_components(
+            binary,
+            voxel_volume_mm3=voxel_volume_mm3,
+            minimum_volume_mm3=float(
+                manifest["minimum_component_volume_mm3"]
+            ),
+        )
+    if policy.get("family") != "relative_mean_volume_confidence_guard":
+        raise SystemExit(f"unsupported post-processing policy: {policy}")
+    instances, count = ndi.label(
+        binary, structure=np.ones((3, 3, 3), dtype=np.uint8)
+    )
+    if count == 0:
+        return np.zeros_like(binary, dtype=np.uint8)
+    sizes = np.bincount(instances.ravel(), minlength=count + 1)
+    sums = np.bincount(
+        instances.ravel(),
+        weights=np.asarray(probability, dtype=np.float64).ravel(),
+        minlength=count + 1,
+    )
+    ids = np.arange(1, count + 1, dtype=np.int64)
+    volume_ok = sizes[1:] >= (
+        float(policy["minimum_fraction_of_mean"])
+        * float(sizes[1:].mean())
+    )
+    confidence_ok = (
+        sums[1:] / sizes[1:]
+        >= float(policy["minimum_mean_probability"])
+    )
+    selected = np.zeros(count + 1, dtype=bool)
+    selected[ids[volume_ok | confidence_ok]] = True
+    return selected[instances].astype(np.uint8)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", type=Path, required=True)
@@ -108,12 +153,10 @@ def main() -> int:
     ):
         raise SystemExit("probability lies outside [0,1]")
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    expected = remove_small_components(
-        probability_array > float(manifest["probability_threshold"]),
+    expected = apply_postprocessing(
+        probability_array,
+        manifest,
         voxel_volume_mm3=float(np.prod(reference.GetSpacing())),
-        minimum_volume_mm3=float(
-            manifest["minimum_component_volume_mm3"]
-        ),
     )
     if not np.array_equal(
         expected, segmentation_array.astype(np.uint8)

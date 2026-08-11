@@ -3,24 +3,41 @@
   "checkpoint_name": "checkpoint_final.pth",
   "dataset": "Dataset503_ISLES26R3Raw",
   "files": {
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "7510e2990933ae76fdaced9be449ef5441e80e7ebbb0cb361eaaa48abf1e1873",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "a960c204d13bc893d76e8289c31c6c5523d16ecacf4b475ef01340189381f0f4",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "4e53e66e6bcf6cb65317cd6e1f785fa3bff9b036e58b34a12f4fc93f554c03c8",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "750e7e0d4107afdf8405000a278e8199a87ed4a44f455dd21c39067c6b854d22",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "754f267c24f2cc292a3f84ef492ffc32b23d427881a4e18d6b0af9492b8c44db",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "a3c6c59cd0100b0d7050c53cad93b7b12b939e6cfa472189b57aada5eab1ed7d",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "8f89f6b241fa1997de07533d52bd228eb515825edbcb2149e791708ebc053fed",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "6477596562e9692705748812981839e490aef8885877daa6a16aefda37e27a02",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "a6ee19dd45e7104425b89e3eae77269aa9fd898ee568d709663e532f9dfe2336",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "462c4724d9816b03220cbbd07576827fe3a0ab82ae282b3f83cbb65d160f7873",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467"
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "4b65074b46c315e0c3bbec6b27ce22a1c38a5f9068e5451bca9696b52c2d9d05",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "209905ccb38a4d813e260709f5d6a4bdd0a6b2de757588aa29bfd7ac4b4aee6e",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "deef98a082fdcb95939e91f93e7834342f6aa363dbcaaf5c2e5a506642022c5c",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "9773cea9fc4423d5afd0631bf23522b5ca7c090061b6707664cae7bc5d03c38c",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "3a1ac29ef89a8158d6d862fcbe9607b8c9097f17c3e9f090cc952366b3c483cb",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "c59355522d24e053e32706fc1557fd987543326265a2725c0489aec043789c9c",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "0daf50c424a5649bab1c5e35df9a2cc4847909464752f5c5baf5d60fca11cf1c",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "e977d4e33514b5ccfbe7fa47d2bbef498551ad427ed629e22580c5f6b0b6fee2",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "bbd1932aa092d8e1e24d6a35267da478b7ff5de2a517ef449a0670aa35920854",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "18e4fac44ebf4d5cdf97920bc6f3136a9ae71479c75143ffc79afd1211db6dd9",
+    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467"
   },
-  "folds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
   "inference_trainer": "nnUNetTrainer",
-  "minimum_component_volume_mm3": 25.0,
-  "model_directory": "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres",
-  "probability_threshold": 0.3,
+  "minimum_component_volume_mm3": 0.0,
+  "model_directory": "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres",
+  "postprocessing_policy": {
+    "family": "relative_mean_volume_confidence_guard",
+    "minimum_fraction_of_mean": 0.05,
+    "minimum_mean_probability": 0.55
+  },
+  "probability_threshold": 0.2,
   "schema_version": 1,
-  "source_trainer": "nnUNetTrainerISLES26TverskyDirect300"
+  "source_checkpoint_name": "checkpoint_epoch_0500.pth",
+  "source_trainer": "nnUNetTrainerISLES26Baseline1000"
 }

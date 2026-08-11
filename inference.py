@@ -94,6 +94,18 @@ def validate_manifest_layout(
         raise ValueError(
             f"invalid post-processing policy: {threshold}, {minimum_volume}"
         )
+    policy = manifest.get("postprocessing_policy")
+    if policy is not None:
+        if policy.get("family") != "relative_mean_volume_confidence_guard":
+            raise ValueError(f"unsupported post-processing policy: {policy}")
+        fraction = float(policy["minimum_fraction_of_mean"])
+        confidence = float(policy["minimum_mean_probability"])
+        if not 0 < fraction < 1 or not threshold < confidence <= 1:
+            raise ValueError(f"invalid guarded relative-volume policy: {policy}")
+        if minimum_volume != 0:
+            raise ValueError(
+                "guarded relative-volume policy cannot also use absolute volume"
+            )
 
     expected_files = {
         f"{model_directory}/dataset.json",
@@ -261,6 +273,56 @@ def remove_small_components(
     return keep[instances].astype(np.uint8)
 
 
+def apply_postprocessing(
+    probability: np.ndarray,
+    manifest: dict[str, Any],
+    *,
+    voxel_volume_mm3: float,
+) -> np.ndarray:
+    threshold = float(manifest["probability_threshold"])
+    if not 0 < threshold < 1:
+        raise ValueError(f"invalid probability threshold: {threshold}")
+    binary = np.asarray(probability > threshold, dtype=bool)
+    policy = manifest.get("postprocessing_policy")
+    if policy is None:
+        return remove_small_components(
+            binary,
+            voxel_volume_mm3=voxel_volume_mm3,
+            minimum_volume_mm3=float(
+                manifest["minimum_component_volume_mm3"]
+            ),
+        )
+    if policy.get("family") != "relative_mean_volume_confidence_guard":
+        raise ValueError(f"unsupported post-processing policy: {policy}")
+    if not binary.any():
+        return np.zeros_like(binary, dtype=np.uint8)
+    instances, count = ndi.label(
+        binary, structure=np.ones((3, 3, 3), dtype=np.uint8)
+    )
+    if count == 0:
+        return np.zeros_like(binary, dtype=np.uint8)
+    sizes = np.bincount(instances.ravel(), minlength=count + 1)
+    sums = np.bincount(
+        instances.ravel(),
+        weights=np.asarray(probability, dtype=np.float64).ravel(),
+        minlength=count + 1,
+    )
+    component_ids = np.arange(1, count + 1, dtype=np.int64)
+    minimum = (
+        float(policy["minimum_fraction_of_mean"])
+        * float(sizes[1:].mean())
+    )
+    volume_ok = sizes[1:] >= minimum
+    confidence_ok = (
+        sums[1:] / sizes[1:]
+        >= float(policy["minimum_mean_probability"])
+    )
+    selected = np.zeros(count + 1, dtype=bool)
+    selected[component_ids[volume_ok | confidence_ok]] = True
+    selected[0] = False
+    return selected[instances].astype(np.uint8)
+
+
 def write_output(
     *,
     socket: str,
@@ -357,16 +419,10 @@ def run(model: ModelBundle) -> None:
             raise ValueError("probability map lies outside [0,1]")
         probability = np.clip(probability, 0, 1)
 
-        threshold = float(model.manifest["probability_threshold"])
-        if not 0 < threshold < 1:
-            raise ValueError(f"invalid probability threshold: {threshold}")
-        binary = (probability > threshold).astype(np.uint8)
-        binary = remove_small_components(
-            binary,
+        binary = apply_postprocessing(
+            probability,
+            model.manifest,
             voxel_volume_mm3=float(np.prod(reference.GetSpacing())),
-            minimum_volume_mm3=float(
-                model.manifest["minimum_component_volume_mm3"]
-            ),
         )
 
     segmentation_output = write_output(

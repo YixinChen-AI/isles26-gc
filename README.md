@@ -15,6 +15,12 @@ Execution policy for this project:
 - the small `isles26_model_manifest.json` is versioned with each algorithm tag,
   allowing default and calibrated submissions to reuse the exact same weights.
 
+The `v0.5.0` milestone uses all ten independent Dice+CE epoch-500 folds. Its
+binary policy thresholds the averaged foreground probability at `0.2`, removes
+components smaller than `5%` of the prediction's mean component volume, and
+retains any smaller component whose mean foreground probability is at least
+`0.55`. The continuous probability output is unchanged.
+
 Required model layout:
 
 ```text

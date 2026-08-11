@@ -156,6 +156,40 @@ def main() -> int:
     )
     assert np.array_equal(filtered, validator_filtered)
 
+    guarded_probability = np.zeros((9, 10, 11), np.float32)
+    guarded_probability[1:4, 1:4, 1:4] = 0.9
+    guarded_probability[6, 6, 6] = 0.8
+    guarded_probability[7, 1:3, 1:3] = 0.21
+    guarded_manifest = {
+        "probability_threshold": 0.2,
+        "minimum_component_volume_mm3": 0.0,
+        "postprocessing_policy": {
+            "family": "relative_mean_volume_confidence_guard",
+            "minimum_fraction_of_mean": 0.5,
+            "minimum_mean_probability": 0.55,
+        },
+    }
+    guarded = inference.apply_postprocessing(
+        guarded_probability, guarded_manifest, voxel_volume_mm3=1.0
+    )
+    validator_guarded = validate_outputs.apply_postprocessing(
+        guarded_probability, guarded_manifest, voxel_volume_mm3=1.0
+    )
+    assert int(guarded.sum()) == 28
+    assert np.array_equal(guarded, validator_guarded)
+
+    guarded_layout = synthetic_manifest()
+    guarded_layout.update(guarded_manifest)
+    inference.validate_manifest_layout(guarded_layout)
+    invalid_guard = json.loads(json.dumps(guarded_layout))
+    invalid_guard["postprocessing_policy"]["minimum_mean_probability"] = 0.1
+    try:
+        inference.validate_manifest_layout(invalid_guard)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid confidence guard was accepted")
+
     with tempfile.TemporaryDirectory() as tmp:
         old_output = inference.OUTPUT_PATH
         inference.OUTPUT_PATH = Path(tmp)
