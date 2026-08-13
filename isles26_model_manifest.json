@@ -1,86 +1,38 @@
 {
   "bundle_purpose": "final",
-  "calibration_provenance": {
-    "num_cases": 1453,
-    "record_sha256": "419ee554d2d2d42019b8735c3c7f6c1c3ad32782e5b36487550165d783aaf67e",
-    "selected_candidate": "baseline_weight=0.15|family=relative_mean_volume_confidence_guard|t=0.11|minimum_fraction_of_mean=0.05|minimum_mean_probability=0.55"
-  },
+  "checkpoint_name": "checkpoint_final.pth",
   "dataset": "Dataset503_ISLES26R3Raw",
-  "ensemble_blend_mode": "weighted_probability",
-  "ensemble_models": [
-    {
-      "checkpoint_name": "checkpoint_final.pth",
-      "folds": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "model_directory": "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres",
-      "name": "baseline",
-      "source_checkpoint_name": "checkpoint_epoch_0500.pth",
-      "source_trainer": "nnUNetTrainerISLES26Baseline1000",
-      "weight": 0.15
-    },
-    {
-      "checkpoint_name": "checkpoint_final.pth",
-      "folds": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "model_directory": "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres",
-      "name": "tversky",
-      "source_checkpoint_name": "checkpoint_final.pth",
-      "source_trainer": "nnUNetTrainerISLES26TverskyDirect300",
-      "weight": 0.85
-    }
-  ],
   "files": {
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "4b65074b46c315e0c3bbec6b27ce22a1c38a5f9068e5451bca9696b52c2d9d05",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "209905ccb38a4d813e260709f5d6a4bdd0a6b2de757588aa29bfd7ac4b4aee6e",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "deef98a082fdcb95939e91f93e7834342f6aa363dbcaaf5c2e5a506642022c5c",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "9773cea9fc4423d5afd0631bf23522b5ca7c090061b6707664cae7bc5d03c38c",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "3a1ac29ef89a8158d6d862fcbe9607b8c9097f17c3e9f090cc952366b3c483cb",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "c59355522d24e053e32706fc1557fd987543326265a2725c0489aec043789c9c",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "0daf50c424a5649bab1c5e35df9a2cc4847909464752f5c5baf5d60fca11cf1c",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "e977d4e33514b5ccfbe7fa47d2bbef498551ad427ed629e22580c5f6b0b6fee2",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "bbd1932aa092d8e1e24d6a35267da478b7ff5de2a517ef449a0670aa35920854",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "18e4fac44ebf4d5cdf97920bc6f3136a9ae71479c75143ffc79afd1211db6dd9",
-    "nnUNetTrainerISLES26Baseline1000__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "31c37f985298d5ed210df106c8786665fbc315239e641a7355c09cf6dc7346de",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "d1253ba382e3e6689218c962e80130c47822146d28c57663ad82eb5092a523d8",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "b4d04fe6f988b7f11644f773b1a52cd9ebf4f9ba4214baa5380e616f32883ab0",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "d034bb148ed6a33144b17082ce2b68eec71746792b354f46fa494fd6f4bd08e0",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "8af033a6fd3de65254d50497e7055938c3f8b39d2f715c746fc6e51dd68bc391",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "ec60928c0b9c5371e0acdefab0c924dc0a095b56d1f3ed139f00dcd6fc0851ab",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "b5eeb61f7ccc0f4207df1f5aea3fac96423efd4594908803c21818e64a248479",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "b55d0a51902f4204605f7e3815a975ef177e46e44ec331e719934ad2c4a5a010",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "c091c2636921ebe147953f4e446ab24f8af520398c35e3eeb771fb1a35a1e22c",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "f51fd8b9edfddaeb2a6799e76308805efdc033c56fe067fdeb99e595cb5bb97f",
-    "nnUNetTrainerISLES26TverskyDirect300__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467"
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/dataset.json": "eab989640037ca8b54fd5531b797595eea05091cf7a0c4006b5c73f97edf5d6c",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_0/checkpoint_final.pth": "409498b6a5ac96a6de282d59c5e197c40bafd1cc072ec11e8f65e187fef6f888",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_1/checkpoint_final.pth": "ce777f7ededa6b4bdf678104a9ee58b8a258d374466f3026079f170221259020",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_2/checkpoint_final.pth": "27233d4010b21b6d37c20149d55888098d7a8d448919ca40425eb1ee8296d7cb",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_3/checkpoint_final.pth": "f9eff0c8a14c133edd532a0233cc99562e7154e9ad376e35a668764aeaf1a9f4",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_4/checkpoint_final.pth": "7fd224644107404e05e26a936a26c09244027bf1c91a8587b652d395d4e1da76",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_5/checkpoint_final.pth": "c45856e4c1c9ee439733f0f80176d4b2beda19992a69600ef933b3ea8df36c66",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_6/checkpoint_final.pth": "955ff6cd2fbc0bde4750052e278cec6c968d1583978db42c109611c0db4f3489",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_7/checkpoint_final.pth": "c37b2fad859cbf885926775b95beb224d2af8d5ef855a580b3c06d4d2b389859",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_8/checkpoint_final.pth": "dc47ea7cf45b375600aed70189a1ea67ee6770503de2e14526cc96e71703f722",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/fold_9/checkpoint_final.pth": "569f78365989089df4b073dddb047433ece113ea62d1896caa95b3887648dffc",
+    "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres/plans.json": "d91ba09c991e8857c2e72788f7514a375a067150a620374840a39997462ab467"
   },
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "inference_trainer": "nnUNetTrainer",
   "minimum_component_volume_mm3": 0.0,
-  "postprocessing_policy": {
-    "family": "relative_mean_volume_confidence_guard",
-    "minimum_fraction_of_mean": 0.05,
-    "minimum_mean_probability": 0.55
-  },
-  "probability_threshold": 0.11,
-  "schema_version": 2
+  "model_directory": "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700__nnUNetResEncUNetLPlans__3d_fullres",
+  "probability_threshold": 0.5,
+  "schema_version": 1,
+  "source_checkpoint_name": "checkpoint_final.pth",
+  "source_trainer": "nnUNetTrainerISLES26Fixed500LowLRLesionSampling700"
 }
