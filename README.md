@@ -15,13 +15,11 @@ Execution policy for this project:
 - the small `isles26_model_manifest.json` is versioned with each algorithm tag,
   allowing default and calibrated submissions to reuse the exact same weights.
 
-The `v0.6.0` milestone combines all ten independent Dice+CE epoch-500 folds
-with all ten precision-oriented Tversky epoch-300 folds using arithmetic
-probability weights `0.15/0.85`. Its binary policy thresholds the blended
-foreground probability at `0.11`, removes components smaller than `5%` of the
-prediction's mean component volume, and retains any smaller component whose
-mean foreground probability is at least `0.55`. The continuous probability
-output is the weighted blend before binary post-processing.
+The `v0.8.0` Preliminary milestone uses all ten independent v0.5 Dice+CE
+epoch-1000 folds. It averages their foreground probabilities, thresholds at
+`0.5`, and applies no connected-component filtering. The exact model archive
+SHA-256 is
+`5f0cbf44b88f8baeaea6fd15d5d4037ca297b7b3c4b47f4e829084c4ddc09cb3`.
 
 Required model layout:
 

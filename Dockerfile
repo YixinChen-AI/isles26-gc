@@ -26,9 +26,9 @@ RUN python -m pip install \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-lesion-sampling-lr700-raw-r1
-ARG MODEL_ARCHIVE_SHA256=3ebfa9a1a4721f431ba8686a23565f78a3ae723e1792fafa7fa8499f151e7b78
-ARG WEIGHTS_PARTS="model.tar.gz.part-aa model.tar.gz.part-ab model.tar.gz.part-ac model.tar.gz.part-ad"
+ARG WEIGHTS_BASE=https://github.com/YixinChen-AI/isles26-weights/releases/download/dataset503-v05-epoch1000-preliminary-r2
+ARG MODEL_ARCHIVE_SHA256=5f0cbf44b88f8baeaea6fd15d5d4037ca297b7b3c4b47f4e829084c4ddc09cb3
+ARG WEIGHTS_PARTS="model.tar.gz.part-aa model.tar.gz.part-ab model.tar.gz.part-ac model.tar.gz.part-ad model.tar.gz.part-ae model.tar.gz.part-af model.tar.gz.part-ag model.tar.gz.part-ah"
 RUN mkdir -p /opt/app/model \
     && : > /tmp/model.tar.gz \
     && for part in ${WEIGHTS_PARTS}; do \
