@@ -31,26 +31,25 @@
   "inference_trainer": "nnUNetTrainer",
   "minimum_component_volume_mm3": 0.0,
   "model_directory": "nnUNetTrainerISLES26V05Converged1000__nnUNetResEncUNetLPlans__3d_fullres",
+  "postprocessing_policy": {
+    "family": "relative_mean_volume_confidence_guard",
+    "minimum_fraction_of_mean": 0.05,
+    "minimum_mean_probability": 0.55
+  },
   "probability_threshold": 0.5,
   "schema_version": 1,
   "selection_provenance": {
-    "external_submission_authorized": false,
-    "folds": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9
-    ],
-    "num_cases": 1453,
-    "phase": "preliminary",
-    "selected_candidate": "v0.5-dice-ce-epoch1000-threshold0.5",
-    "selection_record_sha256": "e5f7a5d135258eabc665b6337b913bb94ed37e667a9c1a620e2517017be9a937"
+    "calibration_sha256": "9189cfa77c539ac19c12f5cc7c75cdcc4c28e122c69dbcb5edd8d47045f72378",
+    "candidate": "family=relative_mean_volume_confidence_guard|t=0.5|minimum_fraction_of_mean=0.05|minimum_mean_probability=0.55",
+    "postprocessing_policy": {
+      "family": "relative_mean_volume_confidence_guard",
+      "minimum_fraction_of_mean": 0.05,
+      "minimum_mean_probability": 0.55
+    },
+    "preliminary_reconciliation_sha256": "87c50657e09e96fb23e841c2bc83fa0d3649664da7ecf359cbc95052fc23e105",
+    "selected_pr_convention": "trapezoidal",
+    "selection_policy": "explicit_pareto",
+    "selection_record_sha256": "cdfcf056e4845c24677cb697d15ab437bbb26f46385987612b2bacdb437505d7"
   },
   "source_checkpoint_name": "checkpoint_final.pth",
   "source_trainer": "nnUNetTrainerISLES26V05Converged1000"
